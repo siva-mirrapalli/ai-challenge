@@ -8,9 +8,25 @@ export default async function handler(req, res) {
     if (req.method !== "GET") {
       return res.status(405).json({ message: "Method not allowed" });
     }
-
+    const { rag } = req.query;
     await connect();
-    const result = await IntervieweeDetails.find({});
+    let result = await IntervieweeDetails.find({});
+
+    if (rag) {
+      result = result.map((user) => ({
+        _id: user?._id,
+        gmail: user?.gmail,
+        mobile_number: user?.contact_details.mobile_number,
+        "Project or domains that user have experience in": user?.experience.map(
+          (exp) => ({
+            "project domain": exp?.project_domain,
+            "number of months": exp?.project_months,
+            "technologies used in this project": exp?.teckstack,
+          }),
+        ),
+        "Technologies that user have experience in": user?.overall_techstack,
+      }));
+    }
 
     res.status(200).json(result);
   } catch (error) {
